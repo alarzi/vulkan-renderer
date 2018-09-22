@@ -1,5 +1,15 @@
 #include "VulkanRenderer.h"
 
+VulkanRenderer* VulkanRenderer::_instance = nullptr;
+
+VulkanRenderer* VulkanRenderer::get_instance()
+{
+	if (!_instance) {
+		_instance = new VulkanRenderer;
+	}
+	return _instance;
+}
+
 VulkanRenderer::VulkanRenderer()
 {
 	is_ready = false;
@@ -325,14 +335,14 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 		shader_stages[0].flags = 0;
 		shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
 		shader_stages[0].pName = "main";
-		shader_stages[0].module = shader_loader.load(device, "Data/shaders/simple.vert.spv");
+		shader_stages[0].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\Data\\shaders\\simple.vert.spv");
 
 		shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		shader_stages[1].pSpecializationInfo = nullptr;
 		shader_stages[1].flags = 0;
 		shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		shader_stages[1].pName = "main";
-		shader_stages[1].module = shader_loader.load(device, "Data/shaders/simple.frag.spv");
+		shader_stages[1].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\Data\\shaders\\simple.frag.spv");
 
 		// Input assembly state describes how primitives are assembled
 		VkPipelineInputAssemblyStateCreateInfo input_assembly;

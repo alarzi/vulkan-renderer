@@ -3,6 +3,8 @@
 Common::Common()
 {
 	vk_renderer = new VulkanRenderer();
+
+	HINSTANCE vulkan_renderer_api_dll = LoadLibrary("MyDLL");
 }
 
 Common::~Common()
@@ -113,8 +115,6 @@ void Common::system_create_console(PHANDLER_ROUTINE ctrlHandler) {
 
 	SetConsoleCtrlHandler(ctrlHandler, TRUE);
 }
-
-
 
 void Common::system_events_loop() {
 	MSG msg;
