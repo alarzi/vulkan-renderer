@@ -68,5 +68,8 @@
     <ClInclude Include="Renderer\VulkanTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="System\VulkanExports.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

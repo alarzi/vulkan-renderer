@@ -20,10 +20,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{6564E319-C9B6-4035-A9E3-31FEB76C747D}</ProjectGuid>
+    <ProjectGuid>{A82182C0-AB87-46AA-BA80-48B036C63E35}</ProjectGuid>
     <RootNamespace>vulkanrendererdll</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
-    <ProjectName>vulkan-renderer-api</ProjectName>
+    <ProjectName>vulkan-renderer-dll</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetExt>.pyd</TargetExt>
+    <TargetExt>.dll</TargetExt>
     <TargetName>vk_renderer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -85,7 +85,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include;C:\Users\Antoine\AppData\Local\Programs\Python\Python37-32\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WINDOWS;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;VK_USE_PLATFORM_WIN32_KHR;VULKAN_RENDERER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Users\Antoine\AppData\Local\Programs\Python\Python37-32\libs;$(SolutionDir)ThirdParty\lib\vulkan\lib</AdditionalLibraryDirectories>
@@ -97,10 +97,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <ConformanceMode>false</ConformanceMode>
+      <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\include;C:\Users\Antoine\AppData\Local\Programs\Python\Python37-32\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>VULKAN_RENDERER_EXPORTS;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link />
     <Link>
@@ -156,6 +156,7 @@
     <ClInclude Include="Renderer\VulkanShader.h" />
     <ClInclude Include="Renderer\VulkanSwapchain.h" />
     <ClInclude Include="Renderer\VulkanTools.h" />
+    <ClInclude Include="System\VulkanExports.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

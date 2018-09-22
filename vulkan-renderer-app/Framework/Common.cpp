@@ -2,12 +2,12 @@
 
 Common::Common()
 {
-	vk_renderer = new VulkanRenderer();
+	//vk_renderer = new VulkanRenderer();
 }
 
 Common::~Common()
 {
-	delete vk_renderer;
+	//delete vk_renderer;
 }
 
 bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHANDLER_ROUTINE ctrlHandler)
@@ -21,7 +21,8 @@ bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHAN
 		return false;
 	}
 
-	vk_renderer->initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
+	//vk_renderer->initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
+	vk_initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
 
 	ShowWindow(win32_vars.hWnd, nCmdShow);
 	UpdateWindow(win32_vars.hWnd);
@@ -35,14 +36,16 @@ void Common::render_loop()
 {
 	system_events_loop();
 	if (!IsIconic(win32_vars.hWnd)) {
-		vk_renderer->render();
+		//vk_renderer->render();
+		vk_render();
 	}
 }
 
 void Common::shutdown()
 {
 	std::cout << "Shutdown...\n";
-	vk_renderer->shutdown();
+	//vk_renderer->shutdown();
+	vk_shutdown();
 	system_exit();
 }
 
@@ -143,7 +146,7 @@ void Common::system_destroy_window()
 void Common::system_exit()
 {
 	std::cout << "system exit\n";
-	timeEndPeriod(1);
+	//timeEndPeriod(1);
 	system_destroy_window();
 	ExitProcess(0);
 }

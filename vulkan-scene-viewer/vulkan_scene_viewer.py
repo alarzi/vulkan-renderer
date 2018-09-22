@@ -1,5 +1,5 @@
 from PySide2 import (QtGui, QtCore)
-import vk_renderer
+import vk_py_renderer
 
 class SimpleVulkanApplication(QtGui.QWindow):
 
@@ -18,16 +18,16 @@ class SimpleVulkanApplication(QtGui.QWindow):
         self.timer.start()
 
     def __del__(self):
-        vk_renderer.cleanup()
+        vk_py_renderer.cleanup()
         self.destroy()
 
     def initialize(self):
-        vk_renderer.initialize(self.winId(), self.width(), self.height())
+        vk_py_renderer.initialize(self.winId(), self.width(), self.height())
 
     def render(self):
         if not self.isExposed():
             return
-        vk_renderer.render()
+        vk_py_renderer.render()
 
 
 if __name__ == '__main__':
