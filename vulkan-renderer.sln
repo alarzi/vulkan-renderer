@@ -13,6 +13,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan-renderer-app", "vulk
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan-renderer-python", "vulkan-renderer-python\vulkan-renderer-python.vcxproj", "{6564E319-C9B6-4035-A9E3-31FEB76C747D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A82182C0-AB87-46AA-BA80-48B036C63E35} = {A82182C0-AB87-46AA-BA80-48B036C63E35}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan-renderer-core", "vulkan-renderer-core\vulkan-renderer-core.vcxproj", "{A82182C0-AB87-46AA-BA80-48B036C63E35}"
 EndProject

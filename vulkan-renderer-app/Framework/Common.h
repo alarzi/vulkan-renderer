@@ -34,6 +34,7 @@ public:
 
 private:
 	//VulkanRenderer * vk_renderer;
+	bool is_ready;
 
 	void system_create_console(PHANDLER_ROUTINE ctrlHandler);
 	void system_set_dpi_awreness();

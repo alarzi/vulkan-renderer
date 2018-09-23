@@ -26,8 +26,8 @@
     <Compile Include="vulkan_scene_viewer.py" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\vulkan-renderer-dll\vulkan-renderer-dll.vcxproj">
-      <Name>vulkan-renderer-api</Name>
+    <ProjectReference Include="..\vulkan-renderer-python\vulkan-renderer-python.vcxproj">
+      <Name>vulkan-renderer-python</Name>
       <Project>{6564e319-c9b6-4035-a9e3-31feb76c747d}</Project>
       <Private>True</Private>
     </ProjectReference>

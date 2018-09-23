@@ -46,41 +46,9 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	/**
 	* create uniform buffer
 	*/
-	{
-		struct {
-			glm::mat4 model_matrix;
-			glm::mat4 view_matrix;
-			glm::mat4 projection_matrix;
-		} mvp;
+	create_uniform_buffer(uniform_buffer);
+	update_uniform_buffer(width, height);
 
-		mvp.projection_matrix = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 256.0f);
-		mvp.view_matrix = glm::lookAt(
-			glm::vec3(0.0f, 0.0f, -10.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		mvp.model_matrix = glm::mat4(1.0f);
-
-		create_buffer(device, sizeof(mvp), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_buffer.buffer);
-
-		VkMemoryRequirements memory_requirements;
-		vkGetBufferMemoryRequirements(device, uniform_buffer.buffer, &memory_requirements);
-
-		VkMemoryAllocateInfo memory_allocate_info = {};
-		memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memory_allocate_info.allocationSize = memory_requirements.size;
-		memory_allocate_info.memoryTypeIndex = get_memory_type_index(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-		VK_CHECK_RESULT(vkAllocateMemory(device, &memory_allocate_info, nullptr, &uniform_buffer.memory));
-		uint8_t* data;
-		VK_CHECK_RESULT(vkMapMemory(device, uniform_buffer.memory, 0, sizeof(mvp), 0, (void**)&data));
-		memcpy(data, &mvp, sizeof(mvp));
-		vkUnmapMemory(device, uniform_buffer.memory);
-
-		VK_CHECK_RESULT(vkBindBufferMemory(device, uniform_buffer.buffer, uniform_buffer.memory, 0));
-		uniform_buffer.buffer_info.buffer = uniform_buffer.buffer;
-		uniform_buffer.buffer_info.offset = 0;
-		uniform_buffer.buffer_info.range = sizeof(mvp);
-	}
 
 	/**
 	* init description set layout
@@ -168,26 +136,7 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	/*
 	* init frame buffer
 	*/
-	{
-		frame_buffers.resize(swapchain.images.size());
-		for (uint32_t i = 0; i < frame_buffers.size(); i++)
-		{
-			std::array<VkImageView, 2> frame_buffers_attachments;
-			frame_buffers_attachments[0] = swapchain.images[i].view;
-			frame_buffers_attachments[1] = depth_buffer.view;
-
-			VkFramebufferCreateInfo frame_buffer_create_info = {};
-			frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			frame_buffer_create_info.renderPass = render_pass;
-			frame_buffer_create_info.attachmentCount = static_cast<uint32_t>(frame_buffers_attachments.size());
-			frame_buffer_create_info.pAttachments = frame_buffers_attachments.data();
-			frame_buffer_create_info.width = width;
-			frame_buffer_create_info.height = height;
-			frame_buffer_create_info.layers = 1;
-
-			VK_CHECK_RESULT(vkCreateFramebuffer(device, &frame_buffer_create_info, nullptr, &frame_buffers[i]));
-		}
-	}
+	create_frame_buffer(width, height, frame_buffers);
 
 	/*
 	* init vertex buffer
@@ -433,77 +382,7 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	/*
 	* build command buffers
 	*/
-	{
-		VkCommandBufferBeginInfo cmdBufInfo = {};
-		cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		// Set clear values for all framebuffer attachments with loadOp set to clear
-		// We use two attachments (color and depth) that are cleared at the start of the subpass and as such we need to set clear values for both
-		VkClearValue clearValues[2];
-		clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 1.0f } };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-
-		VkRenderPassBeginInfo renderPassBeginInfo = {};
-		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassBeginInfo.renderPass = render_pass;
-		renderPassBeginInfo.renderArea.offset.x = 0;
-		renderPassBeginInfo.renderArea.offset.y = 0;
-		renderPassBeginInfo.renderArea.extent.width = width;
-		renderPassBeginInfo.renderArea.extent.height = height;
-		renderPassBeginInfo.clearValueCount = 2;
-		renderPassBeginInfo.pClearValues = clearValues;
-
-		for (int32_t i = 0; i < command_buffers.size(); ++i)
-		{
-			// Set target frame buffer
-			renderPassBeginInfo.framebuffer = frame_buffers[i];
-
-			VK_CHECK_RESULT(vkBeginCommandBuffer(command_buffers[i], &cmdBufInfo));
-
-			// Start the first sub pass specified in our default render pass setup by the base class
-			// This will clear the color and depth attachment
-			vkCmdBeginRenderPass(command_buffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-			// Update dynamic viewport state
-			VkViewport viewport = {};
-			viewport.height = (float)height;
-			viewport.width = (float)width;
-			viewport.minDepth = (float) 0.0f;
-			viewport.maxDepth = (float) 1.0f;
-			vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
-
-			// Update dynamic scissor state
-			VkRect2D scissor = {};
-			scissor.extent.width = width;
-			scissor.extent.height = height;
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-			vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
-
-			// Bind descriptor sets describing shader binding points
-			vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-
-			// Bind the rendering pipeline
-			// The pipeline (state object) contains all states of the rendering pipeline, binding it will set all the states specified at pipeline creation time
-			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline);
-
-			// Bind triangle vertex buffer (contains position and colors)
-			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &vertex_buffer.buffer, offsets);
-
-			// Bind triangle index buffer
-			vkCmdBindIndexBuffer(command_buffers[i], index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-			// Draw indexed triangle
-			vkCmdDrawIndexed(command_buffers[i], index_buffer.count, 1, 0, 0, 1);
-
-			vkCmdEndRenderPass(command_buffers[i]);
-
-			// Ending the render pass will add an implicit barrier transitioning the frame buffer color attachment to 
-			// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR for presenting it to the windowing system
-			VK_CHECK_RESULT(vkEndCommandBuffer(command_buffers[i]));
-		}
-	}
+	create_command_buffer(width, height, command_buffers);
 
 	/*
 	* create sync primitives
@@ -529,6 +408,169 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	is_ready = true;
 
 	return true;
+}
+
+void VulkanRenderer::create_uniform_buffer(VulkanBuffer& uniform_buffer)
+{
+	create_buffer(device, sizeof(mvp_matrix), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniform_buffer.buffer);
+
+	VkMemoryRequirements memory_requirements;
+	vkGetBufferMemoryRequirements(device, uniform_buffer.buffer, &memory_requirements);
+
+	VkMemoryAllocateInfo memory_allocate_info = {};
+	memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memory_allocate_info.allocationSize = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex = get_memory_type_index(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	VK_CHECK_RESULT(vkAllocateMemory(device, &memory_allocate_info, nullptr, &uniform_buffer.memory));
+	VK_CHECK_RESULT(vkBindBufferMemory(device, uniform_buffer.buffer, uniform_buffer.memory, 0));
+	uniform_buffer.buffer_info.buffer = uniform_buffer.buffer;
+	uniform_buffer.buffer_info.offset = 0;
+	uniform_buffer.buffer_info.range = sizeof(mvp_matrix);
+}
+
+void VulkanRenderer::update_uniform_buffer(const uint32_t &width, const uint32_t &height)
+{
+	mvp_matrix.projection = glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 256.0f);
+	mvp_matrix.view = glm::lookAt(
+		glm::vec3(0.0f, 0.0f, -10.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f));
+	mvp_matrix.model = glm::mat4(1.0f);
+
+	uint8_t* data;
+	VK_CHECK_RESULT(vkMapMemory(device, uniform_buffer.memory, 0, sizeof(mvp_matrix), 0, (void**)&data));
+	memcpy(data, &mvp_matrix, sizeof(mvp_matrix));
+	vkUnmapMemory(device, uniform_buffer.memory);
+}
+
+void VulkanRenderer::create_command_buffer(const uint32_t &width, const uint32_t &height, std::vector<VkCommandBuffer>& command_buffers)
+{
+	VkCommandBufferBeginInfo cmdBufInfo = {};
+	cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+	// Set clear values for all framebuffer attachments with loadOp set to clear
+	// We use two attachments (color and depth) that are cleared at the start of the subpass and as such we need to set clear values for both
+	VkClearValue clearValues[2];
+	clearValues[0].color = { { 0.0f, 0.0f, 0.2f, 1.0f } };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	VkRenderPassBeginInfo renderPassBeginInfo = {};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.renderPass = render_pass;
+	renderPassBeginInfo.renderArea.offset.x = 0;
+	renderPassBeginInfo.renderArea.offset.y = 0;
+	renderPassBeginInfo.renderArea.extent.width = width;
+	renderPassBeginInfo.renderArea.extent.height = height;
+	renderPassBeginInfo.clearValueCount = 2;
+	renderPassBeginInfo.pClearValues = clearValues;
+
+	for (int32_t i = 0; i < command_buffers.size(); ++i)
+	{
+		// Set target frame buffer
+		renderPassBeginInfo.framebuffer = frame_buffers[i];
+
+		VK_CHECK_RESULT(vkBeginCommandBuffer(command_buffers[i], &cmdBufInfo));
+
+		// Start the first sub pass specified in our default render pass setup by the base class
+		// This will clear the color and depth attachment
+		vkCmdBeginRenderPass(command_buffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Update dynamic viewport state
+		VkViewport viewport = {};
+		viewport.height = (float)height;
+		viewport.width = (float)width;
+		viewport.minDepth = (float) 0.0f;
+		viewport.maxDepth = (float) 1.0f;
+		vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
+
+		// Update dynamic scissor state
+		VkRect2D scissor = {};
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
+
+		// Bind descriptor sets describing shader binding points
+		vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+
+		// Bind the rendering pipeline
+		// The pipeline (state object) contains all states of the rendering pipeline, binding it will set all the states specified at pipeline creation time
+		vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline);
+
+		// Bind triangle vertex buffer (contains position and colors)
+		VkDeviceSize offsets[1] = { 0 };
+		vkCmdBindVertexBuffers(command_buffers[i], 0, 1, &vertex_buffer.buffer, offsets);
+
+		// Bind triangle index buffer
+		vkCmdBindIndexBuffer(command_buffers[i], index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		// Draw indexed triangle
+		vkCmdDrawIndexed(command_buffers[i], index_buffer.count, 1, 0, 0, 1);
+
+		vkCmdEndRenderPass(command_buffers[i]);
+
+		// Ending the render pass will add an implicit barrier transitioning the frame buffer color attachment to 
+		// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR for presenting it to the windowing system
+		VK_CHECK_RESULT(vkEndCommandBuffer(command_buffers[i]));
+	}
+}
+
+void VulkanRenderer::create_frame_buffer(const uint32_t &width, const uint32_t &height, std::vector<VkFramebuffer>& frame_buffers)
+{
+	frame_buffers.resize(swapchain.images.size());
+	for (uint32_t i = 0; i < frame_buffers.size(); i++)
+	{
+		std::array<VkImageView, 2> frame_buffers_attachments;
+		frame_buffers_attachments[0] = swapchain.images[i].view;
+		frame_buffers_attachments[1] = depth_buffer.view;
+
+		VkFramebufferCreateInfo frame_buffer_create_info = {};
+		frame_buffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		frame_buffer_create_info.renderPass = render_pass;
+		frame_buffer_create_info.attachmentCount = static_cast<uint32_t>(frame_buffers_attachments.size());
+		frame_buffer_create_info.pAttachments = frame_buffers_attachments.data();
+		frame_buffer_create_info.width = width;
+		frame_buffer_create_info.height = height;
+		frame_buffer_create_info.layers = 1;
+
+		VK_CHECK_RESULT(vkCreateFramebuffer(device, &frame_buffer_create_info, nullptr, &frame_buffers[i]));
+	}
+}
+
+void VulkanRenderer::resize(uint32_t width, uint32_t height)
+{
+	if (!is_ready)
+		return;
+	is_ready = false;
+
+	vkDeviceWaitIdle(device);
+
+	// Recreate the swapchain
+	swapchain.create(instance, device.physical_device, device, presentation_surface, &width, &height);
+
+	// Recreate the frame buffers
+	vkDestroyImageView(device, depth_buffer.view, nullptr);
+	vkDestroyImage(device, depth_buffer.image, nullptr);
+	vkFreeMemory(device, depth_buffer.memory, nullptr);
+	create_depth_buffer(width, height, depth_buffer);
+	for (uint32_t i = 0; i < frame_buffers.size(); i++) {
+		vkDestroyFramebuffer(device, frame_buffers[i], nullptr);
+	}
+	create_frame_buffer(width, height, frame_buffers);
+
+	// Command buffers need to be recreated as they may store
+	// references to the recreated frame buffer
+	vkFreeCommandBuffers(device, command_pool, static_cast<uint32_t>(command_buffers.size()), command_buffers.data());
+	allocate_command_buffer(device, command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, swapchain.images.size(), command_buffers);
+	create_command_buffer(width, height, command_buffers);
+
+	vkDeviceWaitIdle(device);
+
+	update_uniform_buffer(width, height);
+
+	is_ready = true;
 }
 
 void VulkanRenderer::render()

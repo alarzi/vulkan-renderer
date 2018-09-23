@@ -45,13 +45,20 @@ struct Vertex {
 	float color[3];
 };
 
+struct ModelViewProjectMatrix {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+};
+
 class VulkanRenderer
 {
 public:
 	VulkanRenderer();
 	~VulkanRenderer();
 
-	bool							initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, uint32_t height);
+	bool							initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, uint32_t height);	
+	void							resize(uint32_t width, uint32_t height);
 	void							render();
 	void							shutdown();
 
@@ -97,12 +104,18 @@ private:
 	VkPipeline						graphics_pipeline;
 	VkPipelineCache					graphics_pipeline_cache;
 
+	ModelViewProjectMatrix			mvp_matrix;
+
 	bool							is_ready;
 
 	bool create_command_pool(VkDevice logical_device, VkCommandPoolCreateFlags parameters, uint32_t queue_family, VkCommandPool & command_pool);
 	bool allocate_command_buffer(VkDevice logical_device, VkCommandPool command_pool, VkCommandBufferLevel level, uint32_t count, std::vector<VkCommandBuffer> & command_buffers);
 	bool create_depth_buffer(const uint32_t width, const uint32_t height, DepthBuffer & depth_buffer);
+	void create_frame_buffer(const uint32_t &width, const uint32_t &height, std::vector<VkFramebuffer> & frame_buffers);
 	bool create_buffer(VkDevice logical_device, VkDeviceSize size, VkBufferUsageFlags usage, VkBuffer & buffer);
+	void create_command_buffer(const uint32_t &width, const uint32_t &height, std::vector<VkCommandBuffer>&command_buffers);
+	void create_uniform_buffer(VulkanBuffer& uniform_buffer);
+	void update_uniform_buffer(const uint32_t &width, const uint32_t &height);
 
 	uint32_t get_memory_type_index(uint32_t type_bits, VkMemoryPropertyFlags properties);
 

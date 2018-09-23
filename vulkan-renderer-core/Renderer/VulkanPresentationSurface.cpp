@@ -1,16 +1,12 @@
 #include "VulkanPresentationSurface.h"
 
-
-
 VulkanPresentationSurface::VulkanPresentationSurface()
 {
 }
 
-
 VulkanPresentationSurface::~VulkanPresentationSurface()
 {
 }
-
 
 bool VulkanPresentationSurface::create(VkInstance instance, HINSTANCE hInstance, HWND hWnd)
 {

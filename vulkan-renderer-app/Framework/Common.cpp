@@ -3,6 +3,7 @@
 Common::Common()
 {
 	//vk_renderer = new VulkanRenderer();
+	is_ready = false;
 }
 
 Common::~Common()
@@ -26,9 +27,9 @@ bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHAN
 
 	ShowWindow(win32_vars.hWnd, nCmdShow);
 	UpdateWindow(win32_vars.hWnd);
-	//SetForegroundWindow(win32_vars.hWnd);
-	//SetFocus(win32_vars.hWnd);
 
+	is_ready = true;
+	   
 	return true;
 }
 
@@ -160,6 +161,17 @@ LRESULT Common::system_handle_messages(HWND hWnd, UINT message, WPARAM wParam, L
 		ValidateRect(hWnd, nullptr);
 	}
 	break;
+	case WM_SIZE:
+	{
+		if ((is_ready) && wParam != SIZE_MINIMIZED) {
+			if ((wParam == SIZE_MAXIMIZED) || (wParam == SIZE_RESTORED)) {
+				uint32_t new_width = LOWORD(lParam);
+				uint32_t new_height = HIWORD(lParam);
+				vk_resize(new_width, new_height);
+			}
+		}
+		break;
+	}
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
