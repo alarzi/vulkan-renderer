@@ -41,6 +41,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.vulkanWindow = VulkanWindow()
         self.vulkanWindowWidget = QtWidgets.QWidget.createWindowContainer(self.vulkanWindow)
 
+        # Stop rendering while moveing the window
+        self.moveEventTimer = QtCore.QTimer(self)
+        self.moveEventTimer.timeout.connect(self.moveEventDone)
+
         # Initialization button
         self.initialize()
         self.button = QtWidgets.QPushButton("Initialize Vulkan")
@@ -74,8 +78,17 @@ class MainWindow(QtWidgets.QMainWindow):
         mainWidget.setLayout(layout)
         self.setCentralWidget(mainWidget)
 
+        self.showMaximized()
+
     def __del__(self):
         self.destroy()
+
+    def moveEvent(self, event):
+        self.moveEventTimer.start(500)
+        self.vulkanWindow.timer.stop()
+
+    def moveEventDone(self):
+        self.vulkanWindow.timer.start()
 
     def createMenu(self):
         fileMenu = self.menuBar().addMenu("&File")
@@ -97,6 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
+    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 
     base_palette = QtGui.QPalette()
 
