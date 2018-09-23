@@ -135,24 +135,7 @@ bool VulkanRenderer::wait_for_all_submitted_commands_to_be_finished(VkDevice log
 	return true;
 }
 
-bool VulkanRenderer::create_buffer(
-	VkDevice logical_device,
-	VkDeviceSize size,
-	VkBufferUsageFlags usage,
-	VkBuffer & buffer)
-{
-	VkBufferCreateInfo buffer_create_info = {};
-	buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	buffer_create_info.usage = usage;
-	buffer_create_info.size = size;
-	buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	buffer_create_info.queueFamilyIndexCount = 0;
-	buffer_create_info.pQueueFamilyIndices = nullptr;
 
-	VK_CHECK_RESULT(vkCreateBuffer(logical_device, &buffer_create_info, nullptr, &buffer));
-
-	return true;
-}
 
 
 bool VulkanRenderer::allocate_and_bind_memory_object_to_buffer(

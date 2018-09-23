@@ -9,11 +9,11 @@ VulkanSwapchain::~VulkanSwapchain()
 {
 }
 
-bool VulkanSwapchain::create(VkInstance instance, VkPhysicalDevice physical_device, VkDevice logical_device, VkSurfaceKHR presentation_surface, uint32_t *width, uint32_t *height)
+bool VulkanSwapchain::create(VulkanInstance instance, VulkanDevice device, VulkanPresentationSurface presentation_surface, uint32_t *width, uint32_t *height)
 {
 	this->instance = instance;
-	this->physical_device = physical_device;
-	this->logical_device = logical_device;
+	this->physical_device = device.physical_device;
+	this->logical_device = device.logical_device;
 	this->presentation_surface = presentation_surface;
 
 	return create_swap_chain(swapchain, width, height);
@@ -41,13 +41,13 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 
 	// Get image format and color space
 	VkColorSpaceKHR image_color_space;
-	if (!get_presentation_surface_format(presentation_surface, { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }, image_format, image_color_space)) {
+	if (!presentation_surface.get_format(physical_device, { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }, image_format, image_color_space)) {
 		return false;
 	}
 
 	// Get the gpu surface capabilities
 	VkSurfaceCapabilitiesKHR surface_capabilities;
-	get_presentation_surface_capabilities(presentation_surface, surface_capabilities);
+	presentation_surface.get_capabilities(physical_device, surface_capabilities);
 
 	// Get the number of swapchain images
 	uint32_t images_count = surface_capabilities.minImageCount + 1;
@@ -236,66 +236,6 @@ bool VulkanSwapchain::get_presentation_mode(VkSurfaceKHR presentation_surface, V
 
 	std::cout << "VK_PRESENT_MODE_FIFO_KHR is not supported though it's mandatory for all drivers!" << std::endl;
 	return false;
-}
-
-bool VulkanSwapchain::get_presentation_surface_capabilities(VkSurfaceKHR presentation_surface, VkSurfaceCapabilitiesKHR& surface_capabilities)
-{
-	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, presentation_surface, &surface_capabilities);
-	if (VK_SUCCESS != result) {
-		std::cout << "Could not get the capabilities of a presentation surface." << std::endl;
-		return false;
-	}
-	return true;
-}
-
-bool VulkanSwapchain::get_presentation_surface_format(VkSurfaceKHR presentation_surface, VkSurfaceFormatKHR desired_surface_format, VkFormat & image_format, VkColorSpaceKHR & image_color_space) {
-	// Enumerate supported formats
-	uint32_t formats_count = 0;
-	VkResult result = VK_SUCCESS;
-
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, presentation_surface, &formats_count, nullptr);
-	if ((VK_SUCCESS != result) ||
-		(0 == formats_count)) {
-		std::cout << "Could not get the number of supported surface formats." << std::endl;
-		return false;
-	}
-
-	std::vector<VkSurfaceFormatKHR> surface_formats(formats_count);
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, presentation_surface, &formats_count, surface_formats.data());
-	if ((VK_SUCCESS != result) || (0 == formats_count)) {
-		std::cout << "Could not enumerate supported surface formats." << std::endl;
-		return false;
-	}
-
-	// Select surface format
-	if ((1 == surface_formats.size()) && (VK_FORMAT_UNDEFINED == surface_formats[0].format)) {
-		image_format = desired_surface_format.format;
-		image_color_space = desired_surface_format.colorSpace;
-		return true;
-	}
-
-	for (auto & surface_format : surface_formats) {
-		if ((desired_surface_format.format == surface_format.format) &&
-			(desired_surface_format.colorSpace == surface_format.colorSpace)) {
-			image_format = desired_surface_format.format;
-			image_color_space = desired_surface_format.colorSpace;
-			return true;
-		}
-	}
-
-	for (auto & surface_format : surface_formats) {
-		if ((desired_surface_format.format == surface_format.format)) {
-			image_format = desired_surface_format.format;
-			image_color_space = surface_format.colorSpace;
-			std::cout << "Desired combination of format and colorspace is not supported. Selecting other colorspace." << std::endl;
-			return true;
-		}
-	}
-
-	image_format = surface_formats[0].format;
-	image_color_space = surface_formats[0].colorSpace;
-	std::cout << "Desired format is not supported. Selecting available format - colorspace combination." << std::endl;
-	return true;
 }
 
 bool VulkanSwapchain::get_swapchain_images(std::vector<VkImage> & swapchain_images)
