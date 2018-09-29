@@ -24,7 +24,8 @@ class VulkanWindow(QtGui.QWindow):
         vk_py_renderer.resize(self.width(), self.height())
 
 class MainWindow(QtWidgets.QMainWindow):
-
+  
+    
     def __init__(self):
         super(MainWindow, self).__init__()
 

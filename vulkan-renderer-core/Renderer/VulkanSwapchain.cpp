@@ -55,9 +55,6 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 		images_count = surface_capabilities.maxImageCount;
 	}
 
-	// Get the swapchain image size
-	VkExtent2D images_size = get_image_size(surface_capabilities);
-
 	// Check usage of swap chain image
 	VkImageUsageFlags image_usage;
 	image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT & surface_capabilities.supportedUsageFlags;
@@ -98,22 +95,25 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 		}
 	}
 
-	VkExtent2D swapchainExtent = {};
+	VkExtent2D image_size = {};
 	// If width (and height) equals the special value 0xFFFFFFFF, the size of the surface will be set by the swapchain
 	if (surface_capabilities.currentExtent.width == (uint32_t)-1)
 	{
 		// If the surface size is undefined, the size is set to
 		// the size of the images requested.
-		swapchainExtent.width = *width;
-		swapchainExtent.height = *height;
+		image_size.width = *width;
+		image_size.height = *height;
 	}
 	else
 	{
 		// If the surface size is defined, the swap chain size must match
-		swapchainExtent = surface_capabilities.currentExtent;
+		image_size = surface_capabilities.currentExtent;
 		*width = surface_capabilities.currentExtent.width;
 		*height = surface_capabilities.currentExtent.height;
 	}
+
+	//swapchainExtent.width = std::clamp(swapchainExtent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
+	//swapchainExtent.height = std::clamp(swapchainExtent.height, surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
 
 	// Create the swapchain
 	VkSwapchainKHR old_swapchain = swapchain;
@@ -123,8 +123,7 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 	swapchain_create_info.minImageCount = images_count;
 	swapchain_create_info.imageFormat = image_format;
 	swapchain_create_info.imageColorSpace = image_color_space;
-	swapchain_create_info.imageExtent = { swapchainExtent.width, swapchainExtent.height };
-	//swapchain_create_info.imageExtent = { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT };
+	swapchain_create_info.imageExtent = image_size;
 	swapchain_create_info.imageUsage = image_usage;
 	swapchain_create_info.preTransform = pre_transformation;
 	swapchain_create_info.imageArrayLayers = 1;

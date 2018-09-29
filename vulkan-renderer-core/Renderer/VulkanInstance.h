@@ -26,4 +26,3 @@ private:
 	VkInstance				instance;
 	bool					create_instance();
 };
-
