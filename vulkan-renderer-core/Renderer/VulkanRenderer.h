@@ -50,18 +50,19 @@ struct ModelViewProjectMatrix {
 	glm::mat4 projection;
 };
 
-class VulkanRenderer
+class VULKAN_RENDERER_API VulkanRenderer
 {
 public:
 	VulkanRenderer();
 	~VulkanRenderer();
 
+	bool							initialize_(int hWnd, int width, int height);
 	bool							initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, uint32_t height);
 	void							resize(uint32_t width, uint32_t height);
 	void							render();
 	void							shutdown();
 
-	static VulkanRenderer*			get_instance();
+	//static VulkanRenderer*			get_instance();
 
 private:
 
@@ -88,7 +89,7 @@ private:
 	VulkanBuffer					uniform_buffer;
 	VulkanBuffer					vertex_buffer;
 	VulkanIndexBuffer				index_buffer;;
-	uint32_t						current_buffer = 0;
+	uint32_t						current_buffer_index = 0;
 
 	VkRenderPass					render_pass;
 	VkSemaphore						image_acquired_semaphore;

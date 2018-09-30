@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include <vulkan/vulkan.h>
 
@@ -24,16 +25,16 @@ class VulkanSwapchain
 public:
 	VulkanSwapchain();
 	~VulkanSwapchain();
-	
+
 	operator VkSwapchainKHR() { return swapchain; };
 
 	std::vector<SwapchainBuffer>	images;
 	VkFormat						image_format;
 
-	bool							create(VulkanInstance instance, VulkanDevice device, VulkanPresentationSurface presentation_surface, uint32_t *width, uint32_t *height);
+	bool							create(VulkanInstance instance, VulkanDevice device, VulkanPresentationSurface presentation_surface, uint32_t* width, uint32_t* height);
 	void							shutdown();
 
-	bool							acquire_next_image_index(VkSemaphore semaphore, VkFence fence, uint32_t * image_index);
+	bool							acquire_next_image_index(VkSemaphore semaphore, VkFence fence, uint32_t* image_index);
 	VkResult						queue_present(VkQueue queue, uint32_t image_index, VkSemaphore wait_semaphore);
 
 private:
@@ -46,10 +47,10 @@ private:
 	VulkanPresentationSurface		presentation_surface;
 
 	/** @brief Swapchain stuff */
-	bool					create_swap_chain(VkSwapchainKHR &swapchain, uint32_t *width, uint32_t *height);
-	bool					get_presentation_mode(VkSurfaceKHR presentation_surface, VkPresentModeKHR desired_present_mode, VkPresentModeKHR & present_mode);
-	VkExtent2D				get_image_size(VkSurfaceCapabilitiesKHR &surface_capabilities);
-	bool					get_swapchain_images(std::vector<VkImage> & swapchain_images);
-	bool					create_swapchain_buffers(VkFormat image_format, std::vector<SwapchainBuffer> & swapchain_buffers);
+	bool					create_swapchain(uint32_t* width, uint32_t* height, VkSwapchainKHR &swapchain);
+	bool					create_swapchain(uint32_t* width, uint32_t* height, const VkSwapchainKHR &old_swapchain, VkSwapchainKHR &swapchain);
+	bool					get_presentation_mode(VkSurfaceKHR presentation_surface, VkPresentModeKHR desired_present_mode, VkPresentModeKHR &present_mode);
+	bool					get_swapchain_images(std::vector<VkImage> &swapchain_images);
+	bool					create_swapchain_buffers(VkFormat image_format, std::vector<SwapchainBuffer> &swapchain_buffers);
 };
 

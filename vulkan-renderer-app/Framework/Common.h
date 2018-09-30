@@ -9,6 +9,8 @@
 #include <fcntl.h>
 
 #include "Properties.h"
+
+#include "Renderer/VulkanRenderer.h"
 #include "System/VulkanExports.h"
 
 class Common
@@ -33,7 +35,7 @@ public:
 	} win32_vars;
 
 private:
-	//VulkanRenderer * vk_renderer;
+	VulkanRenderer * vk_renderer;
 	bool is_ready;
 
 	void system_create_console(PHANDLER_ROUTINE ctrlHandler);

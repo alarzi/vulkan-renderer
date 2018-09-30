@@ -2,13 +2,14 @@
 
 Common::Common()
 {
-	//vk_renderer = new VulkanRenderer();
 	is_ready = false;
+	vk_renderer = new VulkanRenderer();
 }
 
 Common::~Common()
 {
-	//delete vk_renderer;
+	delete vk_renderer;
+	shutdown();
 }
 
 bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHANDLER_ROUTINE ctrlHandler)
@@ -22,8 +23,8 @@ bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHAN
 		return false;
 	}
 
-	//vk_renderer->initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
-	vk_initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
+	vk_renderer->initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
+	//vk_initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
 
 	ShowWindow(win32_vars.hWnd, nCmdShow);
 	UpdateWindow(win32_vars.hWnd);
@@ -37,16 +38,16 @@ void Common::render_loop()
 {
 	system_events_loop();
 	if (!IsIconic(win32_vars.hWnd)) {
-		//vk_renderer->render();
-		vk_render();
+		vk_renderer->render();
+		//vk_render();
 	}
 }
 
 void Common::shutdown()
 {
 	std::cout << "Shutdown...\n";
-	//vk_renderer->shutdown();
-	vk_shutdown();
+	vk_renderer->shutdown();
+	//vk_shutdown();
 	system_exit();
 }
 
@@ -137,7 +138,6 @@ void Common::system_destroy_window()
 	// destroy window
 	if (win32_vars.hWnd) {
 		std::cout << "destroying window\n";
-		//common->Printf("...destroying window\n");
 		//ShowWindow(win32_vars.hWnd, SW_HIDE);
 		DestroyWindow(win32_vars.hWnd);
 		win32_vars.hWnd = nullptr;
@@ -167,7 +167,7 @@ LRESULT Common::system_handle_messages(HWND hWnd, UINT message, WPARAM wParam, L
 			if ((wParam == SIZE_MAXIMIZED) || (wParam == SIZE_RESTORED)) {
 				uint32_t new_width = LOWORD(lParam);
 				uint32_t new_height = HIWORD(lParam);
-				vk_resize(new_width, new_height);
+				vk_renderer->resize(new_width, new_height);
 			}
 		}
 		break;

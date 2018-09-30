@@ -40,6 +40,7 @@ bool VulkanInstance::create_instance()
 
 #ifdef ENABLE_DEBUG_LAYERS
 	instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	std::vector<const char*> debug_layers = { "VK_LAYER_LUNARG_standard_validation" };
 #endif
 
@@ -82,6 +83,7 @@ bool VulkanInstance::create_instance()
 	VkDebugReportCallbackCreateInfoEXT callback_create_info = {};
 	callback_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
 	callback_create_info.flags = 
+		//VK_DEBUG_REPORT_INFORMATION_BIT_EXT |
 		VK_DEBUG_REPORT_ERROR_BIT_EXT |
 		VK_DEBUG_REPORT_WARNING_BIT_EXT |
 		VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
@@ -89,6 +91,9 @@ bool VulkanInstance::create_instance()
 
 	VkDebugReportCallbackEXT callback;
 	result = _vkCreateDebugReportCallbackEXT(instance, &callback_create_info, nullptr, &callback);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Failed to set up debug callback");
+	}
 #endif
 
 	return true;

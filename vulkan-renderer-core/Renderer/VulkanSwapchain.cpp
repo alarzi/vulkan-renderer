@@ -1,9 +1,12 @@
 #include "VulkanSwapchain.h"
 
 VulkanSwapchain::VulkanSwapchain()
+	: instance(VK_NULL_HANDLE)
+	, physical_device(VK_NULL_HANDLE)
+	, logical_device(VK_NULL_HANDLE)
+	, swapchain(VK_NULL_HANDLE)
 {
 }
-
 
 VulkanSwapchain::~VulkanSwapchain()
 {
@@ -16,7 +19,7 @@ bool VulkanSwapchain::create(VulkanInstance instance, VulkanDevice device, Vulka
 	this->logical_device = device.logical_device;
 	this->presentation_surface = presentation_surface;
 
-	return create_swap_chain(swapchain, width, height);
+	return create_swapchain(width, height, swapchain);
 }
 
 void VulkanSwapchain::shutdown()
@@ -33,7 +36,28 @@ void VulkanSwapchain::shutdown()
 	}
 }
 
-bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *width, uint32_t *height)
+bool VulkanSwapchain::create_swapchain(uint32_t* width, uint32_t* height, VkSwapchainKHR &swapchain)
+{
+	VkSwapchainKHR old_swapchain = swapchain;
+
+	// Create the swapchain
+	create_swapchain(width, height, old_swapchain, swapchain);
+
+	// Destroy the old swapchain
+	if (old_swapchain != VK_NULL_HANDLE) {
+		vkDestroySwapchainKHR(logical_device, old_swapchain, nullptr);
+		old_swapchain = VK_NULL_HANDLE;
+	}
+
+	// Create the swapchain buffers
+	if (!create_swapchain_buffers(image_format, images)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool VulkanSwapchain::create_swapchain(uint32_t* width, uint32_t* height, const VkSwapchainKHR &old_swapchain, VkSwapchainKHR &swapchain)
 {
 	// Get the presentation mode (triple buffer)
 	VkPresentModeKHR presentation_mode;
@@ -112,11 +136,10 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 		*height = surface_capabilities.currentExtent.height;
 	}
 
-	//swapchainExtent.width = std::clamp(swapchainExtent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
-	//swapchainExtent.height = std::clamp(swapchainExtent.height, surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
+	//image_size.width = std::clamp(image_size.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
+	//simage_size.height = std::clamp(image_size.height, surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
 
 	// Create the swapchain
-	VkSwapchainKHR old_swapchain = swapchain;
 	VkSwapchainCreateInfoKHR swapchain_create_info = {};
 	swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchain_create_info.surface = presentation_surface;
@@ -136,66 +159,11 @@ bool VulkanSwapchain::create_swap_chain(VkSwapchainKHR& swapchain, uint32_t *wid
 	swapchain_create_info.compositeAlpha = composite_alpha;
 
 	VkResult result = vkCreateSwapchainKHR(logical_device, &swapchain_create_info, nullptr, &swapchain);
-	if ((VK_SUCCESS != result) || (VK_NULL_HANDLE == swapchain)) {
-		std::cout << "Could not create a swapchain.\n";
-		return false;
+	if (result != VK_SUCCESS || swapchain == VK_NULL_HANDLE) {
+		throw std::runtime_error("Could not create a swapchain");
 	}
-
-	// Destroy the old swapchain
-	if (VK_NULL_HANDLE != old_swapchain) {
-		vkDestroySwapchainKHR(logical_device, old_swapchain, nullptr);
-		old_swapchain = VK_NULL_HANDLE;
-	}
-
-	// Create the swapchain buffers
-	if (!create_swapchain_buffers(image_format, images)) {
-		return false;
-	}
-
+	
 	return true;
-}
-
-VkExtent2D VulkanSwapchain::get_image_size(VkSurfaceCapabilitiesKHR &surface_capabilities)
-{
-	VkExtent2D image_size = {};
-	//// If width (and height) equals the special value 0xFFFFFFFF, the size of the surface will be set by the swapchain
-	//if (surface_capabilities.currentExtent.width == (uint32_t)-1)
-	//{
-	//	// If the surface size is undefined, the size is set to
-	//	// the size of the images requested.
-	//	image_size.width = *width;
-	//	image_size.height = *height;
-	//}
-	//else
-	//{
-	//	// If the surface size is defined, the swap chain size must match
-	//	image_size = surface_capabilities.currentExtent;
-	//	*width = surface_capabilities.currentExtent.width;
-	//	*height = surface_capabilities.currentExtent.height;
-	//}
-
-	if (0xFFFFFFFF == surface_capabilities.currentExtent.width) {
-		image_size = { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT };
-
-		if (image_size.width < surface_capabilities.minImageExtent.width) {
-			image_size.width = surface_capabilities.minImageExtent.width;
-		}
-		else if (image_size.width > surface_capabilities.maxImageExtent.width) {
-			image_size.width = surface_capabilities.maxImageExtent.width;
-		}
-
-		if (image_size.height < surface_capabilities.minImageExtent.height) {
-			image_size.height = surface_capabilities.minImageExtent.height;
-		}
-		else if (image_size.height > surface_capabilities.maxImageExtent.height) {
-			image_size.height = surface_capabilities.maxImageExtent.height;
-		}
-	}
-	else {
-		image_size = surface_capabilities.currentExtent;
-	}
-
-	return image_size;
 }
 
 bool VulkanSwapchain::get_presentation_mode(VkSurfaceKHR presentation_surface, VkPresentModeKHR desired_present_mode, VkPresentModeKHR & present_mode)

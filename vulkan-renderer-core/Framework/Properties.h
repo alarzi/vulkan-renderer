@@ -8,3 +8,8 @@
 
 #define ENABLE_DEBUG_LAYERS
 
+#ifdef VULKAN_RENDERER_EXPORTS
+#define VULKAN_RENDERER_API __declspec(dllexport)
+#else
+#define VULKAN_RENDERER_API __declspec(dllimport)
+#endif

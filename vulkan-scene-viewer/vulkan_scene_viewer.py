@@ -5,27 +5,27 @@ class VulkanWindow(QtGui.QWindow):
 
     def __init__(self):
         super(VulkanWindow, self).__init__()
+        self.vk_renderer = vk_py_renderer.VulkanRenderer()
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.render)
-        self.timer.start()
 
     def __del__(self):
-        vk_py_renderer.cleanup()
+        self.vk_renderer.cleanup()
 
     def initialize(self):
-        vk_py_renderer.initialize(self.winId(), self.width(), self.height())
+        self.vk_renderer.initialize(self.winId(), self.width(), self.height())
+        self.timer.start()
 
     def render(self):
         if not self.isExposed():
             return
-        vk_py_renderer.render()
+        self.vk_renderer.render()
 
     def resizeEvent(self, event):
-        vk_py_renderer.resize(self.width(), self.height())
+        self.vk_renderer.resize(self.width(), self.height())
 
 class MainWindow(QtWidgets.QMainWindow):
-  
-    
+
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -84,6 +84,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __del__(self):
         self.destroy()
 
+    def closeEvent(self, event):
+        del self.vulkanWindow
+
     def moveEvent(self, event):
         self.moveEventTimer.start(500)
         self.vulkanWindow.timer.stop()
@@ -109,6 +112,9 @@ class MainWindow(QtWidgets.QMainWindow):
         print("exit")
 
 if __name__ == '__main__':
+
+
+
     import sys
     app = QtWidgets.QApplication(sys.argv)
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)

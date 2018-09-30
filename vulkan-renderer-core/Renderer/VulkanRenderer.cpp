@@ -1,13 +1,13 @@
 #include "VulkanRenderer.h"
 
-VulkanRenderer* VulkanRenderer::_instance = nullptr;
-VulkanRenderer* VulkanRenderer::get_instance()
-{
-	if (!_instance) {
-		_instance = new VulkanRenderer;
-	}
-	return _instance;
-}
+//VulkanRenderer* VulkanRenderer::_instance = nullptr;
+//VulkanRenderer* VulkanRenderer::get_instance()
+//{
+//	if (!_instance) {
+//		_instance = new VulkanRenderer;
+//	}
+//	return _instance;
+//}
 
 VulkanRenderer::VulkanRenderer()
 {
@@ -30,8 +30,8 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 {
 	instance.create();
 	presentation_surface.create(instance, hInstance, hWnd);
-	device.create(instance, presentation_surface);
 
+	device.create(instance, presentation_surface);
 	swapchain.create(instance, device, presentation_surface, &width, &height);
 
 	create_depth_buffer(width, height, &depth_buffer);
@@ -63,15 +63,21 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	return true;
 }
 
+bool VulkanRenderer::initialize_(int hWnd, int width, int height)
+{
+	auto hInstance = (HINSTANCE)::GetModuleHandle(NULL);
+	return initialize(hInstance, (HWND)hWnd, width, height);
+}
+
 void VulkanRenderer::render()
 {
 	if (!is_ready)
 		return;
 
-	swapchain.acquire_next_image_index(image_acquired_semaphore, (VkFence)nullptr, &current_buffer);
+	swapchain.acquire_next_image_index(image_acquired_semaphore, (VkFence)nullptr, &current_buffer_index);
 
-	VK_CHECK_RESULT(vkWaitForFences(device, 1, &draw_fences[current_buffer], VK_TRUE, UINT64_MAX));
-	VK_CHECK_RESULT(vkResetFences(device, 1, &draw_fences[current_buffer]));
+	VK_CHECK_RESULT(vkWaitForFences(device, 1, &draw_fences[current_buffer_index], VK_TRUE, UINT64_MAX));
+	VK_CHECK_RESULT(vkResetFences(device, 1, &draw_fences[current_buffer_index]));
 
 	VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	// The submit info structure specifices a command buffer queue submission batch
@@ -82,12 +88,12 @@ void VulkanRenderer::render()
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &render_complete_semaphore;
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pCommandBuffers = &command_buffers[current_buffer];
+	submitInfo.pCommandBuffers = &command_buffers[current_buffer_index];
 	submitInfo.commandBufferCount = 1;
 
-	VK_CHECK_RESULT(vkQueueSubmit(device.present_queue, 1, &submitInfo, draw_fences[current_buffer]));
+	VK_CHECK_RESULT(vkQueueSubmit(device.present_queue, 1, &submitInfo, draw_fences[current_buffer_index]));
 
-	VK_CHECK_RESULT(swapchain.queue_present(device.present_queue, current_buffer, render_complete_semaphore));
+	VK_CHECK_RESULT(swapchain.queue_present(device.present_queue, current_buffer_index, render_complete_semaphore));
 }
 
 void VulkanRenderer::resize(uint32_t width, uint32_t height)
@@ -570,6 +576,11 @@ void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 	dynamic_state.pDynamicStates = dynamic_state_enables.data();
 	dynamic_state.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size());
 
+	// Input assembly state describes how primitives are assembled
+	VkPipelineInputAssemblyStateCreateInfo input_assembly;
+	input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
 	// Vertex input binding
 	VkVertexInputBindingDescription vertex_input_binding = {};
 	vertex_input_binding.binding = 0;
@@ -607,22 +618,15 @@ void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 
 	shader_stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].pSpecializationInfo = nullptr;
-	shader_stages[0].flags = 0;
 	shader_stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
 	shader_stages[0].pName = "main";
-	shader_stages[0].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\Data\\shaders\\simple.vert.spv");
+	shader_stages[0].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\vulkan-renderer-core\\Data\\shaders\\simple.vert.spv");
 
 	shader_stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].pSpecializationInfo = nullptr;
-	shader_stages[1].flags = 0;
 	shader_stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	shader_stages[1].pName = "main";
-	shader_stages[1].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\Data\\shaders\\simple.frag.spv");
-
-	// Input assembly state describes how primitives are assembled
-	VkPipelineInputAssemblyStateCreateInfo input_assembly;
-	input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	shader_stages[1].module = shader_loader.load(device, "D:\\Documents\\Vulkan\\Projects\\vulkan-renderer\\vulkan-renderer-core\\Data\\shaders\\simple.frag.spv");
 
 	// Rasterization state
 	VkPipelineRasterizationStateCreateInfo rasterization_state = {};

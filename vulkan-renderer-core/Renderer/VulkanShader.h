@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <assert.h>
 #include <exception>
 
@@ -17,5 +18,8 @@ public:
 	~VulkanShader();
 
 	VkShaderModule load(VkDevice device, std::string filename);
+	
+private:
+	std::vector<char> load_file(std::string &filename);
 };
 

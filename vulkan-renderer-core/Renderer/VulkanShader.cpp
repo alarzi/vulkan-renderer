@@ -1,5 +1,7 @@
 #include "VulkanShader.h"
 
+using namespace std::string_literals;
+
 VulkanShader::VulkanShader()
 {
 }
@@ -11,39 +13,40 @@ VulkanShader::~VulkanShader()
 
 VkShaderModule VulkanShader::load(VkDevice device, std::string filename)
 {
-	size_t shaderSize;
-	char* shaderCode = NULL;
+	// Load the content of the shader file
+	auto shader_content = load_file(filename);
 
-	std::ifstream is(filename, std::ios::binary | std::ios::in | std::ios::ate);
+	// Create a new shader module that will be used for pipeline creation
+	VkShaderModuleCreateInfo module_create_info = {};
+	module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	module_create_info.codeSize = shader_content.size();
+	module_create_info.pCode = reinterpret_cast<const uint32_t*>(shader_content.data());
 
-	if (is.is_open())
-	{
-		shaderSize = is.tellg();
-		is.seekg(0, std::ios::beg);
-		// Copy file contents into a buffer
-		shaderCode = new char[shaderSize];
-		is.read(shaderCode, shaderSize);
-		is.close();
-		assert(shaderSize > 0);
+	VkShaderModule shaderModule;
+	VK_CHECK_RESULT(vkCreateShaderModule(device, &module_create_info, nullptr, &shaderModule));
+
+	return shaderModule;
+}
+
+std::vector<char> VulkanShader::load_file(std::string &filename)
+{
+	std::ifstream file(filename, std::ios::binary | std::ios::in | std::ios::ate);
+
+	if (!file.is_open()) {
+		throw std::runtime_error("Error: Could not open shader file '"s + filename + "'"s);
 	}
-	if (shaderCode)
-	{
-		// Create a new shader module that will be used for pipeline creation
-		VkShaderModuleCreateInfo moduleCreateInfo{};
-		moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		moduleCreateInfo.codeSize = shaderSize;
-		moduleCreateInfo.pCode = (uint32_t*)shaderCode;
 
-		VkShaderModule shaderModule;
-		VK_CHECK_RESULT(vkCreateShaderModule(device, &moduleCreateInfo, nullptr, &shaderModule));
+	size_t file_size = file.tellg();
+	file.seekg(0, std::ios::beg);
 
-		delete[] shaderCode;
+	// Copy file contents into a buffer
+	std::vector<char> file_buffer(file_size);
+	file.read(file_buffer.data(), file_size);
+	file.close();
 
-		return shaderModule;
+	if (file_size <= 0 || file_buffer.empty()) {
+		throw std::runtime_error("The shader is empty");
 	}
-	else
-	{
-		std::cerr << "Error: Could not open shader file \"" << filename << "\"" << std::endl;
-		return VK_NULL_HANDLE;
-	}
+
+	return file_buffer;
 }
