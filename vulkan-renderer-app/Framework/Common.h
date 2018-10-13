@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <io.h>
 #include <fcntl.h>
+#include <chrono>
+#include <string>
 
 #include "Properties.h"
 
@@ -38,15 +40,21 @@ private:
 	VulkanRenderer * vk_renderer;
 	bool is_ready;
 
+	uint32_t frame_counter = 0;
+	float frame_timer;
+	float fps_timer;
+
 	void system_create_console(PHANDLER_ROUTINE ctrlHandler);
 	void system_set_dpi_awreness();
 	void system_events_loop();
 	void system_exit();
 	void system_destroy_window();
 
-	bool system_create_window(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow);
+	bool system_create_window(HINSTANCE hInstance, WNDPROC wndproc);
 
 	ATOM system_register_window_class(HINSTANCE hInstance, WNDPROC wndproc);
-	bool system_init_instance(HINSTANCE hInstance, int nCmdShow);
+	bool system_init_instance(HINSTANCE hInstance);
+
+	void update_timer(std::chrono::time_point<std::chrono::steady_clock> &start_time, std::chrono::time_point<std::chrono::steady_clock> &end_time);
 };
 

@@ -1,17 +1,9 @@
 #include "VulkanRenderer.h"
 
-//VulkanRenderer* VulkanRenderer::_instance = nullptr;
-//VulkanRenderer* VulkanRenderer::get_instance()
-//{
-//	if (!_instance) {
-//		_instance = new VulkanRenderer;
-//	}
-//	return _instance;
-//}
-
 VulkanRenderer::VulkanRenderer()
+	: is_ready(false)
+	, is_paused(false)
 {
-	is_ready = false;
 }
 
 VulkanRenderer::~VulkanRenderer()
@@ -48,7 +40,7 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	create_uniform_buffer(&uniform_buffer);
 	update_uniform_buffer(width, height, &uniform_buffer);
 	create_vertex_buffer(&vertex_buffer, &index_buffer);
-	
+
 	create_descriptor_pool(&descriptor_pool);
 	create_descriptor_set(&descriptor_set);
 
@@ -63,16 +55,11 @@ bool VulkanRenderer::initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, 
 	return true;
 }
 
-bool VulkanRenderer::initialize_(int hWnd, int width, int height)
-{
-	auto hInstance = (HINSTANCE)::GetModuleHandle(NULL);
-	return initialize(hInstance, (HWND)hWnd, width, height);
-}
-
 void VulkanRenderer::render()
 {
-	if (!is_ready)
+	if (is_paused || !is_ready) {
 		return;
+	}
 
 	swapchain.acquire_next_image_index(image_acquired_semaphore, (VkFence)nullptr, &current_buffer_index);
 
@@ -80,6 +67,7 @@ void VulkanRenderer::render()
 	VK_CHECK_RESULT(vkResetFences(device, 1, &draw_fences[current_buffer_index]));
 
 	VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
 	// The submit info structure specifices a command buffer queue submission batch
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -92,8 +80,19 @@ void VulkanRenderer::render()
 	submitInfo.commandBufferCount = 1;
 
 	VK_CHECK_RESULT(vkQueueSubmit(device.present_queue, 1, &submitInfo, draw_fences[current_buffer_index]));
-
 	VK_CHECK_RESULT(swapchain.queue_present(device.present_queue, current_buffer_index, render_complete_semaphore));
+}
+
+void VulkanRenderer::update(float time)
+{
+	mvp_matrix.model = glm::mat4(1.0f);
+	mvp_matrix.model = glm::translate(mvp_matrix.model, glm::vec3(0.0f, 0.0f, 0.0f));
+	mvp_matrix.model = glm::rotate(mvp_matrix.model, glm::radians(45.0f*time), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	uint8_t* data;
+	VK_CHECK_RESULT(vkMapMemory(device, uniform_buffer.memory, 0, sizeof(mvp_matrix), 0, (void**)&data));
+	memcpy(data, &mvp_matrix, sizeof(mvp_matrix));
+	vkUnmapMemory(device, uniform_buffer.memory);
 }
 
 void VulkanRenderer::resize(uint32_t width, uint32_t height)
@@ -102,8 +101,6 @@ void VulkanRenderer::resize(uint32_t width, uint32_t height)
 		return;
 	}
 	is_ready = false;
-
-	vkDeviceWaitIdle(device);
 
 	// Recreate the swapchain
 	swapchain.create(instance, device, presentation_surface, &width, &height);
@@ -136,12 +133,18 @@ void VulkanRenderer::shutdown()
 {
 	is_ready = false;
 
+	vkDeviceWaitIdle(device);
+
 	std::cout << "Destroy pipeline\n";
 	vkDestroyPipeline(device, graphics_pipeline, nullptr);
 
-	std::cout << "Destroy buffer\n";
+	std::cout << "Destroy vertex buffer\n";
 	vkDestroyBuffer(device, vertex_buffer.buffer, nullptr);
 	vkFreeMemory(device, vertex_buffer.memory, nullptr);
+
+	std::cout << "Destroy index buffer\n";
+	vkDestroyBuffer(device, index_buffer.buffer, nullptr);
+	vkFreeMemory(device, index_buffer.memory, nullptr);
 
 	std::cout << "Destroy frame buffers\n";
 	for (uint32_t i = 0; i < frame_buffers.size(); i++) {
@@ -151,8 +154,14 @@ void VulkanRenderer::shutdown()
 	std::cout << "Destroy render pass\n";
 	vkDestroyRenderPass(device, render_pass, nullptr);
 
-	std::cout << "Destroy semaphore\n";
+	std::cout << "Destroy semaphores\n";
 	vkDestroySemaphore(device, image_acquired_semaphore, nullptr);
+	vkDestroySemaphore(device, render_complete_semaphore, nullptr);
+
+	std::cout << "Destroy fences\n";
+	for (auto& fence : draw_fences) {
+		vkDestroyFence(device, fence, nullptr);
+	}
 
 	vkDestroyDescriptorPool(device, descriptor_pool, nullptr);
 
@@ -246,7 +255,7 @@ bool VulkanRenderer::create_depth_buffer(const uint32_t width, const uint32_t he
 	depth_image_create_info.extent.depth = 1;
 	depth_image_create_info.mipLevels = 1;
 	depth_image_create_info.arrayLayers = 1;
-	depth_image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+	depth_image_create_info.samples = MULTISAMPLE_LEVEL;
 	depth_image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	depth_image_create_info.usage = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	depth_image_create_info.queueFamilyIndexCount = 0;
@@ -337,7 +346,7 @@ void VulkanRenderer::create_render_pass(VkRenderPass* render_pass)
 {
 	std::array<VkAttachmentDescription, 2> attachments{};
 	attachments[0].format = swapchain.image_format;
-	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].samples = MULTISAMPLE_LEVEL;
 	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -346,7 +355,7 @@ void VulkanRenderer::create_render_pass(VkRenderPass* render_pass)
 	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	attachments[1].format = depth_buffer.format;
-	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].samples = MULTISAMPLE_LEVEL;
 	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -455,7 +464,10 @@ void VulkanRenderer::update_uniform_buffer(const uint32_t &width, const uint32_t
 		glm::vec3(0.0f, 0.0f, -10.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
+
 	mvp_matrix.model = glm::mat4(1.0f);
+	mvp_matrix.model = glm::translate(mvp_matrix.model, glm::vec3(0.0f, 0.0f, 0.0f));
+	mvp_matrix.model = glm::rotate(mvp_matrix.model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	uint8_t* data;
 	VK_CHECK_RESULT(vkMapMemory(device, uniform_buffer->memory, 0, sizeof(mvp_matrix), 0, (void**)&data));
@@ -468,8 +480,8 @@ void VulkanRenderer::create_vertex_buffer(VulkanBuffer* vertex_buffer, VulkanInd
 	std::vector<Vertex> vertex_buffer_data =
 	{
 		{ { 1.0f,  1.0f, 0.0f },{ 1.0f, 0.0f, 0.0f } },
-	{ { -1.0f,  1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f } },
-	{ { 0.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } }
+		{ { -1.0f, 1.0f, 0.0f },{ 0.0f, 1.0f, 0.0f } },
+		{ { 0.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } }
 	};
 	uint32_t vertex_buffer_size = static_cast<uint32_t>(vertex_buffer_data.size()) * sizeof(Vertex);
 
@@ -568,9 +580,11 @@ void VulkanRenderer::create_pipeline_cache(VkPipelineCache* pipeline_cache)
 void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 {
 	// Enable dynamic states
-	std::vector<VkDynamicState> dynamic_state_enables;
-	dynamic_state_enables.push_back(VK_DYNAMIC_STATE_VIEWPORT);
-	dynamic_state_enables.push_back(VK_DYNAMIC_STATE_SCISSOR);
+	std::vector<VkDynamicState> dynamic_state_enables{
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
 	VkPipelineDynamicStateCreateInfo dynamic_state = {};
 	dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	dynamic_state.pDynamicStates = dynamic_state_enables.data();
@@ -580,6 +594,7 @@ void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 	VkPipelineInputAssemblyStateCreateInfo input_assembly;
 	input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	input_assembly.primitiveRestartEnable = VK_FALSE;
 
 	// Vertex input binding
 	VkVertexInputBindingDescription vertex_input_binding = {};
@@ -589,19 +604,14 @@ void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 
 	// Inpute attribute bindings describe shader attribute locations and memory layouts
 	std::array<VkVertexInputAttributeDescription, 2> vertex_input_attributes;
-	// These match the following shader layout (see triangle.vert):
-	//	layout (location = 0) in vec3 inPos;
-	//	layout (location = 1) in vec3 inColor;
 	// Attribute location 0: Position
 	vertex_input_attributes[0].binding = 0;
 	vertex_input_attributes[0].location = 0;
-	// Position attribute is three 32 bit signed (SFLOAT) floats (R32 G32 B32)
 	vertex_input_attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	vertex_input_attributes[0].offset = offsetof(Vertex, position);
 	// Attribute location 1: Color
 	vertex_input_attributes[1].binding = 0;
 	vertex_input_attributes[1].location = 1;
-	// Color attribute is three 32 bit signed (SFLOAT) floats (R32 G32 B32)
 	vertex_input_attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 	vertex_input_attributes[1].offset = offsetof(Vertex, color);
 
@@ -677,7 +687,7 @@ void VulkanRenderer::create_graphics_pipeline(VkPipeline* pipeline)
 	VkPipelineMultisampleStateCreateInfo multisample_state = {};
 	multisample_state.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisample_state.pSampleMask = nullptr;
-	multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisample_state.rasterizationSamples = MULTISAMPLE_LEVEL;
 	multisample_state.sampleShadingEnable = VK_FALSE;
 	multisample_state.alphaToCoverageEnable = VK_FALSE;
 	multisample_state.alphaToOneEnable = VK_FALSE;
@@ -764,16 +774,15 @@ void VulkanRenderer::create_command_buffer(const uint32_t &width, const uint32_t
 		VkViewport viewport = {};
 		viewport.height = (float)height;
 		viewport.width = (float)width;
-		viewport.minDepth = (float) 0.0f;
-		viewport.maxDepth = (float) 1.0f;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(command_buffers[i], 0, 1, &viewport);
 
 		// Update dynamic scissor state
 		VkRect2D scissor = {};
 		scissor.extent.width = width;
 		scissor.extent.height = height;
-		scissor.offset.x = 0;
-		scissor.offset.y = 0;
+		scissor.offset = { 0, 0 };
 		vkCmdSetScissor(command_buffers[i], 0, 1, &scissor);
 
 		// Bind descriptor sets describing shader binding points
@@ -834,4 +843,10 @@ bool VulkanRenderer::end_command_buffer(VkCommandBuffer command_buffer)
 		return false;
 	}
 	return true;
+}
+
+bool VulkanRenderer::initialize_(int hWnd, int width, int height)
+{
+	auto hInstance = (HINSTANCE)::GetModuleHandle(NULL);
+	return initialize(hInstance, (HWND)hWnd, width, height);
 }

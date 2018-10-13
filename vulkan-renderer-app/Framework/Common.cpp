@@ -17,29 +17,52 @@ bool Common::initialize(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow, PHAN
 	system_set_dpi_awreness();
 
 	system_create_console(ctrlHandler);
-	system_create_window(hInstance, wndproc, nCmdShow);
+	system_create_window(hInstance, wndproc);
 
 	if (win32_vars.hInstance == NULL || win32_vars.hWnd == NULL) {
 		return false;
 	}
 
 	vk_renderer->initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
-	//vk_initialize(win32_vars.hInstance, win32_vars.hWnd, win32_vars.width, win32_vars.height);
 
 	ShowWindow(win32_vars.hWnd, nCmdShow);
 	UpdateWindow(win32_vars.hWnd);
 
 	is_ready = true;
-	   
+
 	return true;
 }
-
+static float timer = 0.0f;
 void Common::render_loop()
 {
 	system_events_loop();
 	if (!IsIconic(win32_vars.hWnd)) {
+
+		auto start_time = std::chrono::high_resolution_clock::now();
+
 		vk_renderer->render();
-		//vk_render();
+		vk_renderer->update(timer);
+
+		auto end_time = std::chrono::high_resolution_clock::now();
+
+		update_timer(start_time, end_time);
+	}
+}
+
+void Common::update_timer(
+	std::chrono::time_point<std::chrono::steady_clock> &start_time,
+	std::chrono::time_point<std::chrono::steady_clock> &end_time)
+{
+	frame_counter++;
+	
+	auto delta_time = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+	timer += frame_timer;
+	frame_timer = (float)delta_time / 1000.0f;
+	fps_timer += (float)delta_time;
+	if (fps_timer > 1000.0f) {
+		SetWindowText(win32_vars.hWnd, std::to_string(fps_timer).c_str());
+		fps_timer = 0.0f;
+		frame_counter = 0;
 	}
 }
 
@@ -47,15 +70,14 @@ void Common::shutdown()
 {
 	std::cout << "Shutdown...\n";
 	vk_renderer->shutdown();
-	//vk_shutdown();
 	system_exit();
 }
 
-bool Common::system_create_window(HINSTANCE hInstance, WNDPROC wndproc, int nCmdShow)
+bool Common::system_create_window(HINSTANCE hInstance, WNDPROC wndproc)
 {
 	win32_vars.hInstance = hInstance;
 	system_register_window_class(hInstance, wndproc);
-	if (!system_init_instance(hInstance, nCmdShow)) {
+	if (!system_init_instance(hInstance)) {
 		return false;
 	}
 }
@@ -81,7 +103,7 @@ ATOM Common::system_register_window_class(HINSTANCE hInstance, WNDPROC wndproc)
 	return RegisterClassEx(&wcex);
 }
 
-bool Common::system_init_instance(HINSTANCE hInstance, int nCmdShow)
+bool Common::system_init_instance(HINSTANCE hInstance)
 {
 	HWND hWnd = CreateWindow(WIN32_WINDOW_CLASS_NAME, APPLICATION_NAME, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, win32_vars.width, win32_vars.height, nullptr, nullptr, hInstance, nullptr);
@@ -138,7 +160,6 @@ void Common::system_destroy_window()
 	// destroy window
 	if (win32_vars.hWnd) {
 		std::cout << "destroying window\n";
-		//ShowWindow(win32_vars.hWnd, SW_HIDE);
 		DestroyWindow(win32_vars.hWnd);
 		win32_vars.hWnd = nullptr;
 	}
@@ -147,7 +168,6 @@ void Common::system_destroy_window()
 void Common::system_exit()
 {
 	std::cout << "system exit\n";
-	//timeEndPeriod(1);
 	system_destroy_window();
 	ExitProcess(0);
 }

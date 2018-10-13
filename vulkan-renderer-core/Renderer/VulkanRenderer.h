@@ -45,9 +45,9 @@ struct Vertex {
 };
 
 struct ModelViewProjectMatrix {
+	glm::mat4 projection;
 	glm::mat4 model;
 	glm::mat4 view;
-	glm::mat4 projection;
 };
 
 class VULKAN_RENDERER_API VulkanRenderer
@@ -56,17 +56,17 @@ public:
 	VulkanRenderer();
 	~VulkanRenderer();
 
-	bool							initialize_(int hWnd, int width, int height);
 	bool							initialize(HINSTANCE hInstance, HWND hWnd, uint32_t width, uint32_t height);
 	void							resize(uint32_t width, uint32_t height);
 	void							render();
+	void							update(float time);
 	void							shutdown();
 
-	//static VulkanRenderer*			get_instance();
+	bool							initialize_(int hWnd, int width, int height);
+
+	bool							is_paused;
 
 private:
-
-	static VulkanRenderer*			_instance;
 
 	/** @brief Instance */
 	VulkanInstance					instance;

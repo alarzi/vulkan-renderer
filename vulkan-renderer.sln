@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2047
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan-renderer", "vulkan-renderer\vulkan-renderer.vcxproj", "{DFA7CA08-CE28-4832-8547-B4A9D79E1724}"
-EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "vulkan-scene-viewer", "vulkan-scene-viewer\vulkan-scene-viewer.pyproj", "{7D8FA41E-E3C8-40C8-9CB6-C1B832141583}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan-renderer-app", "vulkan-renderer-app\vulkan-renderer-app.vcxproj", "{B7323454-F795-431C-81AC-702ED070B9D7}"
@@ -29,16 +27,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Debug|x64.ActiveCfg = Debug|x64
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Debug|x64.Build.0 = Debug|x64
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Debug|x86.ActiveCfg = Debug|Win32
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Debug|x86.Build.0 = Debug|Win32
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Release|Any CPU.ActiveCfg = Release|Win32
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Release|x64.ActiveCfg = Release|x64
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Release|x64.Build.0 = Release|x64
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Release|x86.ActiveCfg = Release|Win32
-		{DFA7CA08-CE28-4832-8547-B4A9D79E1724}.Release|x86.Build.0 = Release|Win32
 		{7D8FA41E-E3C8-40C8-9CB6-C1B832141583}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7D8FA41E-E3C8-40C8-9CB6-C1B832141583}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{7D8FA41E-E3C8-40C8-9CB6-C1B832141583}.Debug|x86.ActiveCfg = Debug|Any CPU

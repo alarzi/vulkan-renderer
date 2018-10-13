@@ -31,6 +31,9 @@ public:
 	std::vector<SwapchainBuffer>	images;
 	VkFormat						image_format;
 
+	uint32_t						width;
+	uint32_t						height;
+
 	bool							create(VulkanInstance instance, VulkanDevice device, VulkanPresentationSurface presentation_surface, uint32_t* width, uint32_t* height);
 	void							shutdown();
 
@@ -47,8 +50,8 @@ private:
 	VulkanPresentationSurface		presentation_surface;
 
 	/** @brief Swapchain stuff */
-	bool					create_swapchain(uint32_t* width, uint32_t* height, VkSwapchainKHR &swapchain);
-	bool					create_swapchain(uint32_t* width, uint32_t* height, const VkSwapchainKHR &old_swapchain, VkSwapchainKHR &swapchain);
+	bool					create_swapchain();
+	bool					create_swapchain(const VkSwapchainKHR &old_swapchain);
 	bool					get_presentation_mode(VkSurfaceKHR presentation_surface, VkPresentModeKHR desired_present_mode, VkPresentModeKHR &present_mode);
 	bool					get_swapchain_images(std::vector<VkImage> &swapchain_images);
 	bool					create_swapchain_buffers(VkFormat image_format, std::vector<SwapchainBuffer> &swapchain_buffers);

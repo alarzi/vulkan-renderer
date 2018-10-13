@@ -24,6 +24,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="style.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="vulkan_scene_viewer.py" />
   </ItemGroup>
   <ItemGroup>

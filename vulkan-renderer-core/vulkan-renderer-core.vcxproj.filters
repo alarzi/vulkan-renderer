@@ -1,79 +1,94 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{ac04ae8f-409d-4480-9c65-5785b1d4db43}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Data">
+      <UniqueIdentifier>{38ea2664-0d67-479d-8fd5-d2a7fc18c0fe}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Data\Shaders">
+      <UniqueIdentifier>{b21dd599-0a17-4751-9d5d-778a5b620aa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{79dbf3c1-14a5-4560-bd35-4ba1bc66b60f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{4d2f2c00-bb6c-4da1-8294-eeaddc40c2e1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="System\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\VulkanDevice.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanInstance.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanPresentationSurface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanRenderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanRendererEx.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanShader.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanSwapchain.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\VulkanTools.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="System\main.cpp">
+      <Filter>System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Framework\Properties.h">
-      <Filter>Header Files</Filter>
+      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\VulkanDevice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanInstance.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanPresentationSurface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanSwapchain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\VulkanTools.h">
-      <Filter>Header Files</Filter>
+      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="System\VulkanExports.h">
-      <Filter>Header Files</Filter>
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanInstance.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanPresentationSurface.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanRenderer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanShader.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanSwapchain.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\VulkanTools.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <GLSLValidate Include="Data\Shaders\simple.frag" />
-    <GLSLValidate Include="Data\Shaders\simple.vert" />
+    <GLSLValidate Include="Data\Shaders\simple.vert">
+      <Filter>Data\Shaders</Filter>
+    </GLSLValidate>
+    <GLSLValidate Include="Data\Shaders\simple.frag">
+      <Filter>Data\Shaders</Filter>
+    </GLSLValidate>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Shaders\simple.frag.spv">
+      <Filter>Data\Shaders</Filter>
+    </None>
+    <None Include="Data\Shaders\simple.vert.spv">
+      <Filter>Data\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

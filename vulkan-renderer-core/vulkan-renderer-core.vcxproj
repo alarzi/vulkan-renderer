@@ -79,12 +79,13 @@
     <TargetName>vk_renderer_32</TargetName>
     <CodeAnalysisRuleSet>CppCoreCheckRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>vk_renderer</TargetName>
     <TargetExt>.dll</TargetExt>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -176,6 +177,10 @@
   <ItemGroup>
     <GLSLValidate Include="Data\Shaders\simple.frag" />
     <GLSLValidate Include="Data\Shaders\simple.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Shaders\simple.frag.spv" />
+    <None Include="Data\Shaders\simple.vert.spv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
